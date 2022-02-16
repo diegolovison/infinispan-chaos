@@ -1,0 +1,18 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: IOChaos
+metadata:
+  name: io-fault-example
+  namespace: chaos-testing
+spec:
+  action: fault
+  mode: all
+  selector:
+    namespaces:
+      - dlovison
+    labelSelectors:
+      app: 'infinispan-pod'
+  volumePath: /opt/infinispan/server/data
+  path: /opt/infinispan/server/data/**/*
+  errno: 5
+  percent: 50
+  duration: '120s'
