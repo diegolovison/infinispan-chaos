@@ -12,10 +12,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.chaos.call.LogCall;
 import org.infinispan.chaos.client.ClientReady;
+import org.infinispan.chaos.environment.Environment;
+import org.infinispan.chaos.environment.MinikubeEnvironment;
+import org.infinispan.chaos.environment.OpenShiftEnvironment;
 import org.infinispan.chaos.hotrod.HotRodClient;
 import org.infinispan.chaos.io.ProcessWrapper;
 import org.infinispan.chaos.io.Sleep;
-import org.infinispan.chaos.proxy.MinikubeProxy;
 import org.infinispan.chaos.proxy.Proxy;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 
@@ -36,7 +38,7 @@ public class ChaosTesting {
    private final Map<String, HotRodClient> hotRodConnectors;
 
    private String namespace;
-   private String environment;
+   private Environment environment;
    private int expectedNumClients;
    private Watch<V1Pod> watch;
    private boolean started = false;
@@ -60,7 +62,13 @@ public class ChaosTesting {
    }
 
    public ChaosTesting environment(String environment) {
-      this.environment = environment;
+      if ("minikube".equals(environment)) {
+         this.environment = new MinikubeEnvironment();
+      } else if ("openshift".equals(environment)) {
+         this.environment = new OpenShiftEnvironment();
+      } else {
+         throw new IllegalStateException("Cannot create the proxy. Invalid argument: " + environment);
+      }
       return this;
    }
 
@@ -77,14 +85,14 @@ public class ChaosTesting {
       file = url.getFile();
       ProcessWrapper process = new ProcessWrapper();
       try {
-         process.start("kubectl apply -f " + file);
+         process.start(String.format("%s apply -f %s", environment.cmd(), file));
          // x created
          process.read();
          applies.add(file);
       } catch (IOException e) {
          throw new IllegalStateException(e);
       }
-      ChaosTestingFailure failure = new ChaosTestingFailure(executor, file);
+      ChaosTestingFailure failure = new ChaosTestingFailure(executor, file, environment);
       return failure;
    }
 
@@ -134,20 +142,14 @@ public class ChaosTesting {
    }
 
    private Proxy createProxy(String namespace, String podName) {
-      if (this.environment == null) {
-         return new Proxy();
-      } else if ("minikube".equals(this.environment)) {
-         return new MinikubeProxy(namespace, podName);
-      } else {
-         throw new IllegalStateException("cannot create the proxy");
-      }
+      return this.environment.createProxy(namespace, podName);
    }
 
    public void stop() {
       for (String file : applies) {
          ProcessWrapper process = new ProcessWrapper();
          try {
-            process.start("kubectl delete -f " + file);
+            process.start(String.format("%s delete -f %s", this.environment.cmd(), file));
             // x delete
             process.read();
             process.destroy();

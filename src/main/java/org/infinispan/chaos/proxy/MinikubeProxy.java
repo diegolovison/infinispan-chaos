@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.infinispan.chaos.io.ProcessWrapper;
 import org.infinispan.chaos.net.TcpPort;
 
-public class MinikubeProxy extends Proxy {
+public class MinikubeProxy implements Proxy {
 
    private String namespace;
    private String podName;

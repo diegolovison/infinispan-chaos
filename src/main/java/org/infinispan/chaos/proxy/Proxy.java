@@ -1,19 +1,12 @@
 package org.infinispan.chaos.proxy;
 
-public class Proxy {
+public interface Proxy {
 
-   public Proxy() {
-   }
+   void start();
 
-   public void start() {
+   void stop();
 
-   }
-
-   public void stop() {
-
-   }
-
-   public int getClientPort() {
+   default int getClientPort() {
       return 11222;
    }
 }
