@@ -45,6 +45,11 @@ ChaosTesting chaosTesting = new ChaosTesting();
 chaosTesting.namespace("othernamespace");
 ```
 
+# Set HotRod user and password
+```bash
+mvn verify -Dinfinispan.client.hotrod.auth_username=admin -Dinfinispan.client.hotrod.auth_password=password
+```
+
 # kubectl Cheat Sheet
 ### Copy from pod to locally
 ```bash

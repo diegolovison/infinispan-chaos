@@ -41,7 +41,10 @@ public class HotRodClient {
 
             // kubectl get secret example-infinispan-generated-secret -o jsonpath="{.data.identities\.yaml}" | base64 --decode
             ConfigurationBuilder builder = new ConfigurationBuilder();
-            builder.security().authentication().username("developer").password("fJbORTfOHJTmlsfw");
+            String username = System.getProperty("infinispan.client.hotrod.auth_username");
+            if (username != null) {
+               builder.security().authentication().username(username).password(System.getProperty("infinispan.client.hotrod.auth_password"));
+            }
             builder.clientIntelligence(ClientIntelligence.BASIC);
             builder.addServer()
                   .host("127.0.0.1")
