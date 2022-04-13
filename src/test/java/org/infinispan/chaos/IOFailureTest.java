@@ -22,9 +22,7 @@ public class IOFailureTest {
       String cacheName = "cache_" + UUID.randomUUID();
 
       ChaosTesting chaosTesting = new ChaosTesting();
-      chaosTesting
-            .namespace("dlovison")
-            .expectedNumClients(3);
+      chaosTesting.expectedNumClients(3);
 
       DefaultScenario defaultScenario = new DefaultScenario(chaosTesting) {
          @Override

@@ -55,10 +55,15 @@ public class ChaosTesting {
       this.applies = new ArrayList<>();
       this.executor = Executors.newScheduledThreadPool(3);
       environment(System.getenv("CHAOS_TESTING_ENVIRONMENT"));
+      namespace(System.getenv("CHAOS_TESTING_NAMESPACE"));
    }
 
    public ChaosTesting namespace(String namespace) {
-      this.namespace = namespace;
+      if (namespace == null || namespace.trim().length() == 0) {
+         this.namespace = "ispn-testing";
+      } else {
+         this.namespace = namespace;
+      }
       return this;
    }
 

@@ -9,6 +9,11 @@ https://operatorhub.io/operator/infinispan
 # Install Chaos Mesh
 https://chaos-mesh.org/docs/quick-start/
 
+# Create namespace
+```bash
+kubectl create namespace ispn-testing
+```
+
 # Deploy Infinispan
 ```yaml
 apiVersion: infinispan.org/v1
@@ -24,10 +29,20 @@ spec:
 mvn verify
 ```
 
-# Run the test Openshift
+# Run the test on Openshift
 ```bash
 export CHAOS_TESTING_ENVIRONMENT=openshift
 mvn verify
+```
+
+# Changing default namespace
+```bash
+export CHAOS_TESTING_NAMESPACE=mynamespace
+mvn verify
+```
+```java
+ChaosTesting chaosTesting = new ChaosTesting();
+chaosTesting.namespace("othernamespace");
 ```
 
 # kubectl Cheat Sheet
