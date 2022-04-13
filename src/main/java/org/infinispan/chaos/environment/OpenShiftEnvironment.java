@@ -1,6 +1,5 @@
 package org.infinispan.chaos.environment;
 
-import org.infinispan.chaos.proxy.MinikubeProxy;
 import org.infinispan.chaos.proxy.OpenShiftProxy;
 import org.infinispan.chaos.proxy.Proxy;
 
