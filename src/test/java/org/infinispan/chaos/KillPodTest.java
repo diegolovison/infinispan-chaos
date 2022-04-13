@@ -21,8 +21,9 @@ public class KillPodTest {
       builder.memory().maxCount(100);
       String cacheName = "cache_" + UUID.randomUUID();
 
-      ChaosTesting chaosTesting = new ChaosTesting();
-      chaosTesting.expectedNumClients(3);
+      ChaosTesting chaosTesting = new ChaosTesting()
+            .deploy("default_deploy.yaml")
+            .expectedNumClients(3);
 
       DefaultScenario defaultScenario = new DefaultScenario(chaosTesting) {
          @Override

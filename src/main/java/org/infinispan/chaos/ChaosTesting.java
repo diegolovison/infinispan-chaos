@@ -211,4 +211,9 @@ public class ChaosTesting {
          // suppress
       }
    }
+
+   public ChaosTesting deploy(String resourceFile) {
+      apply(resourceFile);
+      return this;
+   }
 }
