@@ -1,7 +1,11 @@
 package org.infinispan.chaos;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -84,12 +88,35 @@ public class ChaosTesting {
       return this;
    }
 
+   private String transformYaml(String file) {
+      Path filePath = Path.of(file);
+      String content;
+      try {
+         content = Files.readString(filePath);
+      } catch (IOException e) {
+         throw new IllegalStateException("Cannot transform yaml", e);
+      }
+      content = content.replaceAll("\\{ \\{ namespace \\} \\}", this.namespace);
+      File tempFile;
+      try {
+         tempFile = File.createTempFile(filePath.getFileName().toString(), ".tmp");
+      } catch (IOException e) {
+         throw new IllegalStateException("Cannot create temp file", e);
+      }
+      try (FileWriter writer = new FileWriter(tempFile)) {
+         writer.write(content);
+      } catch (IOException e) {
+         throw new IllegalStateException("Cannot create temp file", e);
+      }
+      return tempFile.getAbsolutePath();
+   }
+
    public ChaosTestingFailure apply(String file) {
       URL url = ChaosTesting.class.getClassLoader().getResource(file);
       if (url == null) {
          throw new NullPointerException();
       }
-      file = url.getFile();
+      file = transformYaml(url.getFile());
       ProcessWrapper process = new ProcessWrapper();
       try {
          process.start(String.format("%s apply -f %s", environment.cmd(), file));
