@@ -26,6 +26,7 @@ import com.google.gson.reflect.TypeToken;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.Watch;
@@ -107,7 +108,15 @@ public class ChaosTesting {
          Call call = api.listNamespacedPodCall(this.namespace, null, null, null, null, null, null, null, null, null, true, null);
          watch = Watch.createWatch(Config.defaultClient(), call, new TypeToken<Watch.Response<V1Pod>>() {}.getType());
          for (Watch.Response<V1Pod> item : watch) {
-            String podName = item.object.getMetadata().getName();
+            V1ObjectMeta metadata = item.object.getMetadata();
+            if (metadata.getLabels() == null || metadata.getLabels().size() == 0) {
+               continue;
+            }
+            String appLabel = metadata.getLabels().get("app");
+            if (!"infinispan-pod".equals(appLabel)) {
+               continue;
+            }
+            String podName = metadata.getName();
             System.out.printf("%s : %s%n", item.type, podName);
             while (true) {
                boolean found = false;
