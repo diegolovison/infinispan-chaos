@@ -54,6 +54,7 @@ public class ChaosTesting {
       this.hotRodConnectors = new HashMap<>();
       this.applies = new ArrayList<>();
       this.executor = Executors.newScheduledThreadPool(3);
+      environment(System.getenv("CHAOS_TESTING_ENVIRONMENT"));
    }
 
    public ChaosTesting namespace(String namespace) {
@@ -61,8 +62,8 @@ public class ChaosTesting {
       return this;
    }
 
-   public ChaosTesting environment(String environment) {
-      if ("minikube".equals(environment)) {
+   private ChaosTesting environment(String environment) {
+      if (environment == null || environment.trim().length() == 0 || "minikube".equals(environment)) {
          this.environment = new MinikubeEnvironment();
       } else if ("openshift".equals(environment)) {
          this.environment = new OpenShiftEnvironment();

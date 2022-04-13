@@ -24,6 +24,12 @@ spec:
 mvn verify
 ```
 
+# Run the test Openshift
+```bash
+export CHAOS_TESTING_ENVIRONMENT=openshift
+mvn verify
+```
+
 # kubectl Cheat Sheet
 ### Copy from pod to locally
 ```bash

@@ -24,7 +24,6 @@ public class IOFailureTest {
       ChaosTesting chaosTesting = new ChaosTesting();
       chaosTesting
             .namespace("dlovison")
-            .environment("minikube")
             .expectedNumClients(3);
 
       DefaultScenario defaultScenario = new DefaultScenario(chaosTesting) {
