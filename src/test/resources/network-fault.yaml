@@ -2,7 +2,6 @@ apiVersion: chaos-mesh.org/v1alpha1
 kind: NetworkChaos
 metadata:
   name: delay
-  namespace: chaos-testing
 spec:
   action: delay
   mode: all

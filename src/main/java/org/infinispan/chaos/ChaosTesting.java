@@ -19,6 +19,7 @@ import org.infinispan.chaos.client.ClientReady;
 import org.infinispan.chaos.environment.Environment;
 import org.infinispan.chaos.environment.MinikubeEnvironment;
 import org.infinispan.chaos.environment.OpenShiftEnvironment;
+import org.infinispan.chaos.exception.ChaosTestingException;
 import org.infinispan.chaos.hotrod.HotRodClient;
 import org.infinispan.chaos.io.ProcessWrapper;
 import org.infinispan.chaos.io.Sleep;
@@ -119,14 +120,14 @@ public class ChaosTesting {
       file = transformYaml(url.getFile());
       ProcessWrapper process = new ProcessWrapper();
       try {
-         process.start(String.format("%s apply -f %s", environment.cmd(), file));
+         process.start(String.format("%s apply -f %s -n %s", environment.cmd(), file, this.namespace));
          // x created
          process.read();
          applies.add(file);
       } catch (IOException e) {
          throw new IllegalStateException(e);
       }
-      ChaosTestingFailure failure = new ChaosTestingFailure(executor, file, environment);
+      ChaosTestingFailure failure = new ChaosTestingFailure(executor, file, environment, namespace);
       return failure;
    }
 
@@ -178,7 +179,11 @@ public class ChaosTesting {
             }
          }
       } catch (Exception e) {
-         e.printStackTrace();
+         if (e instanceof ChaosTestingException) {
+            throw (ChaosTestingException) e;
+         } else {
+            e.printStackTrace();
+         }
       }
       return this;
    }
@@ -191,7 +196,7 @@ public class ChaosTesting {
       for (String file : applies) {
          ProcessWrapper process = new ProcessWrapper();
          try {
-            process.start(String.format("%s delete -f %s", this.environment.cmd(), file));
+            process.start(String.format("%s delete -f %s -n %s", this.environment.cmd(), file, this.namespace));
             // x delete
             process.read();
             process.destroy();

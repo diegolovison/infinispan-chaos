@@ -46,4 +46,20 @@ public class ProcessWrapper {
          throw new IllegalStateException(e);
       }
    }
+
+   public void execute(String command, String... args) {
+      try {
+         start(String.format(command, args));
+      } catch (IOException e) {
+         throw new IllegalStateException("Cannot execute: " + command, e);
+      }
+      while (true) {
+         try {
+            if (!(reader.readLine() != null)) break;
+         } catch (IOException e) {
+            throw new IllegalStateException("Cannot read process", e);
+         }
+      }
+      destroy();
+   }
 }

@@ -12,6 +12,6 @@ public class MinikubeEnvironment implements Environment {
 
    @Override
    public Proxy createProxy(String namespace, String podName) {
-      return new MinikubeProxy(namespace, podName);
+      return new MinikubeProxy(namespace, podName, this);
    }
 }

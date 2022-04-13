@@ -11,18 +11,20 @@ public class ChaosTestingFailure {
    private final ScheduledExecutorService executor;
    private final String file;
    private final Environment environment;
+   private final String namespace;
 
-   public ChaosTestingFailure(ScheduledExecutorService executor, String file, Environment environment) {
+   public ChaosTestingFailure(ScheduledExecutorService executor, String file, Environment environment, String namespace) {
       this.executor = executor;
       this.file = file;
       this.environment = environment;
+      this.namespace = namespace;
    }
 
    public void solveAfter(long delay, TimeUnit unit) {
       executor.schedule(() -> {
          ProcessWrapper process = new ProcessWrapper();
          try {
-            process.start(String.format("%s delete -f %s", this.environment.cmd(), file));
+            process.start(String.format("%s delete -f %s -n %s", this.environment.cmd(), file, this.namespace));
             // x delete
             process.read();
             process.destroy();

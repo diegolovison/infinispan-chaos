@@ -1,5 +1,6 @@
 package org.infinispan.chaos.hotrod;
 
+import org.infinispan.chaos.exception.ChaosTestingException;
 import org.infinispan.chaos.io.Sleep;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -66,6 +67,6 @@ public class HotRodClient {
             count++;
          }
       }
-      throw new NullPointerException();
+      throw new ChaosTestingException("Cannot create HotRod client");
    }
 }

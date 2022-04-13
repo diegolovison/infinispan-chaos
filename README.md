@@ -1,37 +1,39 @@
-# Start Minikube
+# Minikube
+## Start Minikube
 ```bash
 minikube start --driver=virtualbox --cpus 4 --memory "8192mb" --network-plugin=cni
 ```
 
-# Install Infinispan Operator
+## Install Infinispan Operator
 https://operatorhub.io/operator/infinispan
 
-# Install Chaos Mesh
+## Install Chaos Mesh
 https://chaos-mesh.org/docs/quick-start/
 
-# Create namespace
+## Create namespace
 ```bash
 kubectl create namespace ispn-testing
 ```
 
-# Deploy Infinispan
-```yaml
-apiVersion: infinispan.org/v1
-kind: Infinispan
-metadata:
-  name: example-infinispan
-spec:
-  replicas: 3
+# Openshift
+
+## Install Chaos Mesh
+https://chaos-mesh.org/docs/quick-start/
+
+## Create namespace
+```bash
+oc new-project ispn-testing
+```
+
+# Export the environment variables
+```bash
+export CHAOS_TESTING_ENVIRONMENT=openshift
+export OPENSHIFT_URL=https://api.host:6443
+export OPENSHIFT_TOKEN=sha256~mYtOkEn
 ```
 
 # Run the test
 ```bash
-mvn verify
-```
-
-# Run the test on Openshift
-```bash
-export CHAOS_TESTING_ENVIRONMENT=openshift
 mvn verify
 ```
 

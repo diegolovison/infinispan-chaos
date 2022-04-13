@@ -1,18 +1,10 @@
 package org.infinispan.chaos.proxy;
 
-public class OpenShiftProxy implements Proxy {
+import org.infinispan.chaos.environment.Environment;
 
-   public OpenShiftProxy(String namespace, String podName) {
+public class OpenShiftProxy extends DefaultProxy implements Proxy {
 
-   }
-
-   @Override
-   public void start() {
-
-   }
-
-   @Override
-   public void stop() {
-
+   public OpenShiftProxy(String namespace, String podName, Environment environment) {
+      super(namespace, podName, environment);
    }
 }
