@@ -15,6 +15,15 @@ https://chaos-mesh.org/docs/quick-start/
 kubectl create namespace ispn-testing
 ```
 
+## Metrics Server
+```
+minikube addons list | grep metrics-server
+| metrics-server              | minikube | disabled     |
+```
+```
+minikube addons enable metrics-server
+```
+
 # Openshift
 
 ## Install Chaos Mesh
