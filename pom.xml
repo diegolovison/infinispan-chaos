@@ -11,7 +11,7 @@
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <infinispan.version>13.0.5.Final</infinispan.version>
+        <infinispan.version>13.0.9.Final</infinispan.version>
         <io.kubernetes.version>14.0.0</io.kubernetes.version>
         <junit.version>5.8.2</junit.version>
     </properties>
