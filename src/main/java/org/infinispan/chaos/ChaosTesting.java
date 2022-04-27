@@ -14,6 +14,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.infinispan.chaos.call.LogCall;
 import org.infinispan.chaos.client.ClientReady;
 import org.infinispan.chaos.environment.Environment;
@@ -39,6 +41,8 @@ import okhttp3.Call;
 import okhttp3.OkHttpClient;
 
 public class ChaosTesting {
+
+   private static final Logger log = LogManager.getLogger(ChaosTesting.class);
 
    private final CoreV1Api api;
    private final Map<String, HotRodClient> hotRodConnectors;
@@ -145,12 +149,13 @@ public class ChaosTesting {
                continue;
             }
             String podName = metadata.getName();
-            System.out.printf("%s : %s%n", item.type, podName);
+
+            log.info(String.format("%s : %s%n", item.type, podName));
             while (true) {
                boolean found = false;
-               String log = LogCall.call(this.api, this.namespace, podName);
+               String podOutput = LogCall.call(this.api, this.namespace, podName);
                // stopping
-               if (log == null || log.contains("ISPN080002") && this.hotRodConnectors.containsKey(podName)) {
+               if (podOutput == null || podOutput.contains("ISPN080002") && this.hotRodConnectors.containsKey(podName)) {
                   HotRodClient hotRodClient = this.hotRodConnectors.get(podName);
                   if (hotRodClient != null) {
                      hotRodClient.close();
@@ -158,7 +163,7 @@ public class ChaosTesting {
                   }
                   found = true;
                // started
-               } else if (log.contains("ISPN080001")) {
+               } else if (podOutput.contains("ISPN080001")) {
                   if (!this.hotRodConnectors.containsKey(podName)) {
                      Proxy proxy = createProxy(namespace, podName);
                      HotRodClient hotRodClient = new HotRodClient(cacheName, proxy, cacheConfig);
@@ -167,7 +172,7 @@ public class ChaosTesting {
                   found = true;
                }
                if (found) {
-                  System.out.println(this.hotRodConnectors);
+                  log.info(this.hotRodConnectors);
                   if (!started && this.hotRodConnectors.size() == expectedNumClients) {
                      this.executor.submit(() -> clientReady.run(this.hotRodConnectors));
                      started = true;
@@ -182,7 +187,7 @@ public class ChaosTesting {
          if (e instanceof ChaosTestingException) {
             throw (ChaosTestingException) e;
          } else {
-            e.printStackTrace();
+            log.error(e);
          }
       }
       return this;
