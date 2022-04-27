@@ -4,8 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.concurrent.ExecutionException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ProcessWrapper {
+
+   private static final Logger log = LogManager.getLogger(ProcessWrapper.class);
 
    private Process process;
    private BufferedReader reader;
@@ -22,24 +26,20 @@ public class ProcessWrapper {
 
    public void read() throws IOException {
       String line = reader.readLine();
-      System.out.println(line);
-      if (line != null) {
-         return;
-      } else {
-         line = error.readLine();
-         System.err.println(line);
-      }
+      log.info(String.format("Output line from process(%n): %s", process.pid(), line));
    }
 
    public void destroy() {
+      long pid = process.pid();
+      log.info(String.format("Destroying process(%n)", pid));
       if (process != null) {
          process.destroy();
          process.destroyForcibly();
       }
-      System.out.println("Wait to exit");
+      log.info(String.format("Waiting to exit process(%n)", pid));
       try {
          process.onExit().get();
-         System.out.println("Exit: " + process.exitValue());
+         log.info(String.format("Exit process(%n): %n", pid, process.exitValue()));
       } catch (InterruptedException e) {
          throw new IllegalStateException(e);
       } catch (ExecutionException e) {
