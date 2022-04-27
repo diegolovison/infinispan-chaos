@@ -38,4 +38,9 @@ public class OpenShiftEnvironment implements Environment {
       }
       return value;
    }
+
+   @Override
+   public String toString() {
+      return "openshift";
+   }
 }

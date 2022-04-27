@@ -42,4 +42,14 @@ public class DefaultProxy implements Proxy {
    public int getClientPort() {
       return this.freePort;
    }
+
+   @Override
+   public String toString() {
+      return "DefaultProxy{" +
+            "namespace='" + namespace + '\'' +
+            ", podName='" + podName + '\'' +
+            ", freePort=" + freePort +
+            ", environment=" + environment +
+            '}';
+   }
 }

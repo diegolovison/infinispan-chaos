@@ -124,7 +124,9 @@ public class ChaosTesting {
       file = transformYaml(url.getFile());
       ProcessWrapper process = new ProcessWrapper();
       try {
-         process.start(String.format("%s apply -f %s -n %s", environment.cmd(), file, this.namespace));
+         String command = String.format("%s apply -f %s -n %s", environment.cmd(), file, this.namespace);
+         log.info(String.format("Executing: %s", command));
+         process.start(command);
          // x created
          process.read();
          applies.add(file);

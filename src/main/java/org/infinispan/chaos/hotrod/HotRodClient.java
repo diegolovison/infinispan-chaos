@@ -69,4 +69,12 @@ public class HotRodClient {
       }
       throw new ChaosTestingException("Cannot create HotRod client");
    }
+
+   @Override
+   public String toString() {
+      return "HotRodClient{" +
+            "cacheName='" + cacheName + '\'' +
+            ", proxy=" + proxy +
+            '}';
+   }
 }
