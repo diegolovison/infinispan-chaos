@@ -46,6 +46,12 @@ export OPENSHIFT_TOKEN=sha256~mYtOkEn
 mvn verify
 ```
 
+When latency is high, probably you won't wait a lot of time.
+The following argument allows you to change the iterations percent.
+```bash
+mvn verify -Dinfinispan-chaos.it_pct=0.1
+```
+
 # Changing default namespace
 ```bash
 export CHAOS_TESTING_NAMESPACE=mynamespace
