@@ -35,7 +35,7 @@ public abstract class DefaultScenario implements ClientReady {
                   HotRodClient client = clients.values().iterator().next();
                   RemoteCache remoteCache = client.getRemoteCache();
                   remoteCache.put(key, "value-" + i);
-                  log.info(String.format("Before put: %s elapsed %d", key, ((System.currentTimeMillis() - begin) / 1000)));
+                  log.info(String.format("After put: %s elapsed %d", key, ((System.currentTimeMillis() - begin) / 1000)));
                   if (i == maxValues / 2) {
                      log.info("Introducing failure");
                      introduceFailure();
