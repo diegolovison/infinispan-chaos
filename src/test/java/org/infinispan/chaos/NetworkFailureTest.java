@@ -25,7 +25,7 @@ public class NetworkFailureTest {
             .deploy("default_deploy.yaml")
             .expectedNumClients(3);
 
-      DefaultScenario defaultScenario = new DefaultScenario(chaosTesting) {
+      DefaultScenario defaultScenario = new DefaultScenario(NetworkFailureTest.class.getSimpleName(), chaosTesting) {
          @Override
          public void introduceFailure() {
             chaosTesting.apply("network-fault.yaml").solveAfter(2, TimeUnit.MINUTES);

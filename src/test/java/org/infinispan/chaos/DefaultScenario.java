@@ -13,10 +13,12 @@ public abstract class DefaultScenario implements ClientReady {
 
    private static final Logger log = LogManager.getLogger(DefaultScenario.class);
 
+   private String name;
    private final ChaosTesting chaosTesting;
    private final double pct = Double.valueOf(System.getProperty("infinispan-chaos.it_pct", "1"));
 
-   public DefaultScenario(ChaosTesting chaosTesting) {
+   public DefaultScenario(String name, ChaosTesting chaosTesting) {
+      this.name = name;
       this.chaosTesting = chaosTesting;
    }
 
@@ -25,7 +27,7 @@ public abstract class DefaultScenario implements ClientReady {
       try {
          int maxValues = (int) (10000 * pct);
          for (int i = 0; i < maxValues; i++) {
-            String key = "key-" + i;
+            String key = this.name + "-" + i;
             long begin = System.currentTimeMillis();
             log.info(String.format("Before put: %s", key));
             while (true) {

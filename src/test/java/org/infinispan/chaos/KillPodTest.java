@@ -25,7 +25,7 @@ public class KillPodTest {
             .deploy("default_deploy.yaml")
             .expectedNumClients(3);
 
-      DefaultScenario defaultScenario = new DefaultScenario(chaosTesting) {
+      DefaultScenario defaultScenario = new DefaultScenario(KillPodTest.class.getSimpleName(), chaosTesting) {
          @Override
          public void introduceFailure() {
             chaosTesting.apply("kill-pod.yaml");

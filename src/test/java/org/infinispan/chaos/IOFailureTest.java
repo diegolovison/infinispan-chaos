@@ -25,7 +25,7 @@ public class IOFailureTest {
             .deploy("default_deploy.yaml")
             .expectedNumClients(3);
 
-      DefaultScenario defaultScenario = new DefaultScenario(chaosTesting) {
+      DefaultScenario defaultScenario = new DefaultScenario(IOFailureTest.class.getSimpleName(), chaosTesting) {
          @Override
          public void introduceFailure() {
             chaosTesting.apply("io-fault.yaml");
