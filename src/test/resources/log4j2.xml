@@ -22,11 +22,11 @@
         <Logger name="io.infinispan" level="INFO"/>
         <Root level="INFO">
             <AppenderRef ref="STDOUT" level="INFO"/>
-            <AppenderRef ref="FILE"/>
+            <AppenderRef ref="FILE" level="INFO"/>
         </Root>
 
         <Logger name="org.infinispan.client" level="TRACE" additivity="false">
-            <AppenderRef ref="FILE"/>
+            <AppenderRef ref="FILE" level="TRACE"/>
         </Logger>
     </Loggers>
 </Configuration>

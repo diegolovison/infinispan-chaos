@@ -7,9 +7,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +21,7 @@ import org.infinispan.chaos.environment.MinikubeEnvironment;
 import org.infinispan.chaos.environment.OpenShiftEnvironment;
 import org.infinispan.chaos.exception.ChaosTestingException;
 import org.infinispan.chaos.hotrod.HotRodClient;
+import org.infinispan.chaos.hotrod.HotRodClientPool;
 import org.infinispan.chaos.io.ProcessWrapper;
 import org.infinispan.chaos.io.Sleep;
 import org.infinispan.chaos.proxy.Proxy;
@@ -45,7 +44,7 @@ public class ChaosTesting {
    private static final Logger log = LogManager.getLogger(ChaosTesting.class);
 
    private final CoreV1Api api;
-   private final Map<String, HotRodClient> hotRodConnectors;
+   private final HotRodClientPool hotRodPool;
 
    private String namespace;
    private Environment environment;
@@ -55,13 +54,15 @@ public class ChaosTesting {
    private final List<String> applies;
    private final ScheduledExecutorService executor;
 
+   private boolean watchClosed = false;
+
    public ChaosTesting() throws IOException {
       ApiClient client = Config.defaultClient();
       OkHttpClient httpClient = client.getHttpClient().newBuilder().readTimeout(0, TimeUnit.SECONDS).build();
       client.setHttpClient(httpClient);
       Configuration.setDefaultApiClient(client);
       this.api = new CoreV1Api();
-      this.hotRodConnectors = new HashMap<>();
+      this.hotRodPool = new HotRodClientPool();
       this.applies = new ArrayList<>();
       this.executor = Executors.newScheduledThreadPool(3);
       environment(System.getenv("CHAOS_TESTING_ENVIRONMENT"));
@@ -138,59 +139,68 @@ public class ChaosTesting {
    }
 
    public ChaosTesting run(String cacheName, ConfigurationBuilder cacheConfig, ClientReady clientReady) {
-      try {
-         Call call = api.listNamespacedPodCall(this.namespace, null, null, null, null, null, null, null, null, null, true, null);
-         watch = Watch.createWatch(Config.defaultClient(), call, new TypeToken<Watch.Response<V1Pod>>() {}.getType());
-         for (Watch.Response<V1Pod> item : watch) {
-            V1ObjectMeta metadata = item.object.getMetadata();
-            if (metadata.getLabels() == null || metadata.getLabels().size() == 0) {
-               continue;
-            }
-            String appLabel = metadata.getLabels().get("app");
-            if (!"infinispan-pod".equals(appLabel)) {
-               continue;
-            }
-            String podName = metadata.getName();
+      this.executor.submit(() -> {
+         try {
+            Call call = api.listNamespacedPodCall(this.namespace, null, null, null, null, null, null, null, null, null, true, null);
+            watch = Watch.createWatch(Config.defaultClient(), call, new TypeToken<Watch.Response<V1Pod>>() {}.getType());
+            for (Watch.Response<V1Pod> item : watch) {
+               V1ObjectMeta metadata = item.object.getMetadata();
+               if (metadata.getLabels() == null || metadata.getLabels().size() == 0) {
+                  continue;
+               }
+               String appLabel = metadata.getLabels().get("app");
+               if (!"infinispan-pod".equals(appLabel)) {
+                  continue;
+               }
+               String podName = metadata.getName();
 
-            log.info(String.format("%s : %s%n", item.type, podName));
-            while (true) {
-               boolean found = false;
-               String podOutput = LogCall.call(this.api, this.namespace, podName);
-               // stopping
-               if (podOutput == null || podOutput.contains("ISPN080002") && this.hotRodConnectors.containsKey(podName)) {
-                  HotRodClient hotRodClient = this.hotRodConnectors.get(podName);
-                  if (hotRodClient != null) {
-                     hotRodClient.close();
-                     this.hotRodConnectors.remove(podName);
+               log.info(String.format("%s : %s%n", item.type, podName));
+               while (!watchClosed) {
+                  boolean found = false;
+                  String podOutput = LogCall.call(this.api, this.namespace, podName);
+                  // stopping
+                  if (podOutput == null || podOutput.contains("ISPN080002") && this.hotRodPool.containsKey(podName)) {
+                     HotRodClient hotRodClient = this.hotRodPool.get(podName);
+                     if (hotRodClient != null) {
+                        log.info("Removed %s from the pool", hotRodClient);
+                        hotRodClient.close();
+                        this.hotRodPool.remove(podName);
+                     }
+                     found = true;
+                     // started
+                  } else if (podOutput.contains("ISPN080001")) {
+                     if (!this.hotRodPool.containsKey(podName)) {
+                        Proxy proxy = createProxy(namespace, podName);
+                        HotRodClient hotRodClient = new HotRodClient(cacheName, proxy, cacheConfig);
+                        log.info(String.format("Added %s to the pool", hotRodClient));
+                        this.hotRodPool.put(podName, hotRodClient);
+                     }
+                     found = true;
                   }
-                  found = true;
-               // started
-               } else if (podOutput.contains("ISPN080001")) {
-                  if (!this.hotRodConnectors.containsKey(podName)) {
-                     Proxy proxy = createProxy(namespace, podName);
-                     HotRodClient hotRodClient = new HotRodClient(cacheName, proxy, cacheConfig);
-                     this.hotRodConnectors.put(podName, hotRodClient);
+                  if (found) {
+                     log.info(this.hotRodPool);
+                     if (!started && this.hotRodPool.size() == expectedNumClients) {
+                        this.executor.submit(() -> clientReady.run(hotRodPool));
+                        started = true;
+                     }
+                     break;
+                  } else {
+                     Sleep.sleep(1000);
                   }
-                  found = true;
-               }
-               if (found) {
-                  log.info(this.hotRodConnectors);
-                  if (!started && this.hotRodConnectors.size() == expectedNumClients) {
-                     this.executor.submit(() -> clientReady.run(this.hotRodConnectors));
-                     started = true;
-                  }
-                  break;
-               } else {
-                  Sleep.sleep(1000);
                }
             }
+         } catch (Exception e) {
+            if (e instanceof ChaosTestingException) {
+               throw (ChaosTestingException) e;
+            } else {
+               log.error(e);
+            }
          }
-      } catch (Exception e) {
-         if (e instanceof ChaosTestingException) {
-            throw (ChaosTestingException) e;
-         } else {
-            log.error(e);
-         }
+      });
+      try {
+         this.executor.awaitTermination(1, TimeUnit.DAYS);
+      } catch (InterruptedException e) {
+         log.error(e);
       }
       return this;
    }
@@ -211,14 +221,16 @@ public class ChaosTesting {
             // silent
          }
       }
-      this.hotRodConnectors.values().forEach((client) -> client.close());
+      this.hotRodPool.close();
       closeWatch();
       this.executor.shutdownNow();
    }
 
    private void closeWatch() {
       try {
+         log.info("Closing Watch");
          watch.close();
+         watchClosed = true;
       } catch (Exception e) {
          // suppress
       }

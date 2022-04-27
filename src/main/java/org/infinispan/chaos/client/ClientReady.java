@@ -1,11 +1,9 @@
 package org.infinispan.chaos.client;
 
-import java.util.Map;
-
-import org.infinispan.chaos.hotrod.HotRodClient;
+import org.infinispan.chaos.hotrod.HotRodClientPool;
 
 @FunctionalInterface
 public interface ClientReady {
 
-   void run(Map<String, HotRodClient> hotRodConnectors);
+   void run(HotRodClientPool poll);
 }
