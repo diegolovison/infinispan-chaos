@@ -23,7 +23,6 @@ import org.infinispan.chaos.exception.ChaosTestingException;
 import org.infinispan.chaos.hotrod.HotRodClient;
 import org.infinispan.chaos.hotrod.HotRodClientPool;
 import org.infinispan.chaos.io.ProcessWrapper;
-import org.infinispan.chaos.io.Sleep;
 import org.infinispan.chaos.proxy.Proxy;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 
@@ -156,37 +155,23 @@ public class ChaosTesting {
                }
                String podName = metadata.getName();
 
-               log.info(String.format("%s : %s%n", item.type, podName));
-               while (!watchClosed) {
-                  boolean found = false;
-                  String podOutput = LogCall.call(this.api, this.namespace, podName);
-                  // stopping
-                  if (podOutput == null || podOutput.contains("ISPN080002") && this.hotRodPool.containsKey(podName)) {
-                     HotRodClient hotRodClient = this.hotRodPool.get(podName);
-                     if (hotRodClient != null) {
-                        log.info(String.format("%s removed from the pool", hotRodClient));
-                        hotRodClient.close();
-                        this.hotRodPool.remove(podName);
-                     }
-                     found = true;
-                     // started
-                  } else if (podOutput.contains("ISPN080001")) {
-                     if (!this.hotRodPool.containsKey(podName)) {
+               log.info(String.format("%s: %s%n (%s) - %s", item.type, podName, item.object.getStatus().getPhase(), metadata.getLabels()));
+
+               if ("DELETED".equals(item.type)) {
+                  this.hotRodPool.remove(podName);
+               } else if ("Running".equals(item.object.getStatus().getPhase())) {
+                  if (!this.hotRodPool.containsKey(podName)) {
+                     String podOutput = LogCall.call(this.api, this.namespace, podName);
+                     if (podOutput != null && podOutput.contains("ISPN080001")) {
                         Proxy proxy = createProxy(namespace, podName);
                         HotRodClient hotRodClient = new HotRodClient(cacheName, proxy, cacheConfig);
                         log.info(String.format("%s added to the pool", hotRodClient));
                         this.hotRodPool.put(podName, hotRodClient);
                      }
-                     found = true;
                   }
-                  if (found) {
-                     if (!started && this.hotRodPool.size() == expectedNumClients) {
-                        this.executor.submit(() -> clientReady.run(hotRodPool));
-                        started = true;
-                     }
-                     break;
-                  } else {
-                     Sleep.sleep(1000);
+                  if (!started && this.hotRodPool.size() == expectedNumClients) {
+                     this.executor.submit(() -> clientReady.run(hotRodPool));
+                     started = true;
                   }
                }
             }
@@ -194,7 +179,7 @@ public class ChaosTesting {
             if (e instanceof ChaosTestingException) {
                throw (ChaosTestingException) e;
             } else {
-               log.error(e);
+               log.error("Something wrong: ", e);
             }
          }
       });

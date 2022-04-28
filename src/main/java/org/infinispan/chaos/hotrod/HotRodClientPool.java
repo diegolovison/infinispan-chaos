@@ -5,7 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class HotRodClientPool {
+
+   private static final Logger log = LogManager.getLogger(HotRodClientPool.class);
 
    private final List<String> keys;
    private final Map<String, HotRodClient> clients;
@@ -30,6 +35,12 @@ public class HotRodClientPool {
    }
 
    public void remove(String podName) {
+      HotRodClient hotRodClient = this.clients.get(podName);
+      if (hotRodClient != null) {
+         log.info(String.format("%s removed from the pool", hotRodClient));
+         hotRodClient.close();
+         this.clients.remove(podName);
+      }
       this.keys.remove(podName);
       this.clients.remove(podName);
    }
