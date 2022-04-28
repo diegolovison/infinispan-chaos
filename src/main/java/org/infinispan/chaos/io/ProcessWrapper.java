@@ -26,20 +26,20 @@ public class ProcessWrapper {
 
    public void read() throws IOException {
       String line = reader.readLine();
-      log.info(String.format("Output line from process(%n): %s", process.pid(), line));
+      log.info(String.format("Output line from process(%d): %s", process.pid(), line));
    }
 
    public void destroy() {
       long pid = process.pid();
-      log.info(String.format("Destroying process(%n)", pid));
+      log.info(String.format("Destroying process(%d)", pid));
       if (process != null) {
          process.destroy();
          process.destroyForcibly();
       }
-      log.info(String.format("Waiting to exit process(%n)", pid));
+      log.info(String.format("Waiting to exit process(%d)", pid));
       try {
          process.onExit().get();
-         log.info(String.format("Exit process(%n): %n", pid, process.exitValue()));
+         log.info(String.format("Exit process(%d): %d", pid, process.exitValue()));
       } catch (InterruptedException e) {
          throw new IllegalStateException(e);
       } catch (ExecutionException e) {

@@ -146,10 +146,12 @@ public class ChaosTesting {
             for (Watch.Response<V1Pod> item : watch) {
                V1ObjectMeta metadata = item.object.getMetadata();
                if (metadata.getLabels() == null || metadata.getLabels().size() == 0) {
+                  log.debug(String.format("%s: meta data is empty", item));
                   continue;
                }
                String appLabel = metadata.getLabels().get("app");
                if (!"infinispan-pod".equals(appLabel)) {
+                  log.debug(String.format("%s: has no app label equals infinispan-pod. Labels: %s", item, metadata.getLabels()));
                   continue;
                }
                String podName = metadata.getName();
@@ -162,7 +164,7 @@ public class ChaosTesting {
                   if (podOutput == null || podOutput.contains("ISPN080002") && this.hotRodPool.containsKey(podName)) {
                      HotRodClient hotRodClient = this.hotRodPool.get(podName);
                      if (hotRodClient != null) {
-                        log.info("Removed %s from the pool", hotRodClient);
+                        log.info(String.format("%s removed from the pool", hotRodClient));
                         hotRodClient.close();
                         this.hotRodPool.remove(podName);
                      }
@@ -172,13 +174,12 @@ public class ChaosTesting {
                      if (!this.hotRodPool.containsKey(podName)) {
                         Proxy proxy = createProxy(namespace, podName);
                         HotRodClient hotRodClient = new HotRodClient(cacheName, proxy, cacheConfig);
-                        log.info(String.format("Added %s to the pool", hotRodClient));
+                        log.info(String.format("%s added to the pool", hotRodClient));
                         this.hotRodPool.put(podName, hotRodClient);
                      }
                      found = true;
                   }
                   if (found) {
-                     log.info(this.hotRodPool);
                      if (!started && this.hotRodPool.size() == expectedNumClients) {
                         this.executor.submit(() -> clientReady.run(hotRodPool));
                         started = true;

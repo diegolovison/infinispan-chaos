@@ -17,7 +17,8 @@ public class HotRodClientPool {
 
    public HotRodClient next() {
       int idx = (int)(Math.random() * size());
-      return get(keys.get(idx));
+      HotRodClient client = get(keys.get(idx));
+      return client;
    }
 
    public boolean containsKey(String podName) {
