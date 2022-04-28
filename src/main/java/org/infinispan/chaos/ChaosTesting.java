@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.infinispan.chaos.call.LogCall;
 import org.infinispan.chaos.client.ClientReady;
 import org.infinispan.chaos.environment.Environment;
 import org.infinispan.chaos.environment.MinikubeEnvironment;
@@ -33,6 +32,7 @@ import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodCondition;
 import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.Watch;
 import okhttp3.Call;
@@ -155,19 +155,24 @@ public class ChaosTesting {
                }
                String podName = metadata.getName();
 
-               log.info(String.format("%s: %s%n (%s) - %s", item.type, podName, item.object.getStatus().getPhase(), metadata.getLabels()));
+               log.info(String.format("%s: %s%n", item.type, podName));
 
                if ("DELETED".equals(item.type)) {
                   this.hotRodPool.remove(podName);
-               } else if ("Running".equals(item.object.getStatus().getPhase())) {
-                  if (!this.hotRodPool.containsKey(podName)) {
-                     String podOutput = LogCall.call(this.api, this.namespace, podName);
-                     if (podOutput != null && podOutput.contains("ISPN080001")) {
-                        Proxy proxy = createProxy(namespace, podName);
-                        HotRodClient hotRodClient = new HotRodClient(cacheName, proxy, cacheConfig);
-                        log.info(String.format("%s added to the pool", hotRodClient));
-                        this.hotRodPool.put(podName, hotRodClient);
+               } else if ("Running".equals(item.object.getStatus().getPhase()) && !this.hotRodPool.containsKey(podName)) {
+                  List<V1PodCondition> conditions = item.object.getStatus().getConditions();
+                  boolean startHotRod = false;
+                  for (V1PodCondition condition : conditions) {
+                     if ("Ready".equals(condition.getType()) && "True".equals(condition.getStatus())) {
+                        startHotRod = true;
+                        break;
                      }
+                  }
+                  if (startHotRod) {
+                     Proxy proxy = createProxy(namespace, podName);
+                     HotRodClient hotRodClient = new HotRodClient(cacheName, proxy, cacheConfig);
+                     log.info(String.format("%s added to the pool", hotRodClient));
+                     this.hotRodPool.put(podName, hotRodClient);
                   }
                   if (!started && this.hotRodPool.size() == expectedNumClients) {
                      this.executor.submit(() -> clientReady.run(hotRodPool));
