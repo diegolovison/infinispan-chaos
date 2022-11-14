@@ -15,7 +15,7 @@
         <infinispan.version>13.0.10.Final</infinispan.version>
         <infinispan.version>14.0.0-SNAPSHOT</infinispan.version>
         -->
-        <infinispan.version>14.0.0-SNAPSHOT</infinispan.version>
+        <infinispan.version>14.0.1.Final</infinispan.version>
         <io.kubernetes.version>14.0.0</io.kubernetes.version>
         <junit.version>5.8.2</junit.version>
         <version.log4j>2.17.2</version.log4j>
