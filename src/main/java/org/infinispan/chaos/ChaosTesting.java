@@ -37,6 +37,7 @@ import io.kubernetes.client.util.Config;
 import io.kubernetes.client.util.Watch;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
+import okhttp3.internal.http2.StreamResetException;
 
 public class ChaosTesting {
 
@@ -52,8 +53,6 @@ public class ChaosTesting {
    private boolean started = false;
    private final List<String> applies;
    private final ScheduledExecutorService executor;
-
-   private boolean watchClosed = false;
 
    public ChaosTesting() throws IOException {
       ApiClient client = Config.defaultClient();
@@ -138,6 +137,10 @@ public class ChaosTesting {
    }
 
    public ChaosTesting run(String cacheName, ConfigurationBuilder cacheConfig, ClientReady clientReady) {
+      return run(cacheName, cacheConfig, clientReady, null);
+   }
+
+   public ChaosTesting run(String cacheName, ConfigurationBuilder cacheConfig, ClientReady clientReady, org.infinispan.client.hotrod.configuration.ConfigurationBuilder hotRodClientConfig) {
       this.executor.submit(() -> {
          try {
             Call call = api.listNamespacedPodCall(this.namespace, null, null, null, null, null, null, null, null, null, true, null);
@@ -170,7 +173,7 @@ public class ChaosTesting {
                   }
                   if (startHotRod) {
                      Proxy proxy = createProxy(namespace, podName);
-                     HotRodClient hotRodClient = new HotRodClient(cacheName, proxy, cacheConfig);
+                     HotRodClient hotRodClient = new HotRodClient(cacheName, proxy, cacheConfig, hotRodClientConfig);
                      log.info(String.format("%s added to the pool", hotRodClient));
                      this.hotRodPool.put(podName, hotRodClient);
                   }
@@ -183,6 +186,9 @@ public class ChaosTesting {
          } catch (Exception e) {
             if (e instanceof ChaosTestingException) {
                throw (ChaosTestingException) e;
+            } else if (e.getCause() != null && e.getCause() instanceof StreamResetException) {
+               // ignore because we are stopping the test
+               log.warn("StreamResetException");
             } else {
                log.error("Something wrong: ", e);
             }
@@ -221,14 +227,15 @@ public class ChaosTesting {
       try {
          log.info("Closing Watch");
          watch.close();
-         watchClosed = true;
       } catch (Exception e) {
          // suppress
       }
    }
 
-   public ChaosTesting deploy(String resourceFile) {
-      apply(resourceFile);
+   public ChaosTesting deploy(String... resourceFiles) {
+      for (String resourceFile : resourceFiles) {
+         apply(resourceFile);
+      }
       return this;
    }
 }

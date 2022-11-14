@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 public class NetworkFailureTest {
 
    @Test
-   public void networkFailureTest() throws IOException {
+   public void testNetworkFailure() throws IOException {
       // cache config
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(SoftIndexFileStoreConfigurationBuilder.class);

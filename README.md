@@ -83,3 +83,19 @@ wc -l file
 ```bash
 du -sh file
 ```
+
+# Troubleshooting
+
+## Delete namespace from minikube
+1. `kubectl delete all --all -n ispn-testing`
+2. `kubectl delete namespace ispn-testing`
+3. `kubectl get ns ispn-testing -o json > tmp.json`
+4. Remove `kubernetes` from `finalizers`
+```json
+"finalizers": [
+    "kubernetes"
+]
+```
+3. Start proxy `kubectl proxy`
+4. Execute the API call `curl -k -H "Content-Type: application/json" -X PUT --data-binary @tmp.json http://127.0.0.1:8001/api/v1/namespaces/ispn-testing/finalize`
+5. Double check if the namespace was removed `kubectl get ns ispn-testing`

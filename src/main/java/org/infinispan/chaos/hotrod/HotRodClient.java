@@ -14,10 +14,13 @@ public class HotRodClient {
    private final String cacheName;
    private final Proxy proxy;
    private final RemoteCache remoteCache;
+   private org.infinispan.client.hotrod.configuration.ConfigurationBuilder hotRodClientConfig;
 
-   public HotRodClient(String cacheName, Proxy proxy, org.infinispan.configuration.cache.ConfigurationBuilder cacheConfig) {
+   public HotRodClient(String cacheName, Proxy proxy, org.infinispan.configuration.cache.ConfigurationBuilder cacheConfig, org.infinispan.client.hotrod.configuration.ConfigurationBuilder hotRodClientConfig) {
       this.cacheName = cacheName;
       this.proxy = proxy;
+      this.hotRodClientConfig = hotRodClientConfig;
+      // must be the last
       this.remoteCache = createClient(cacheConfig);
    }
 
@@ -41,23 +44,27 @@ public class HotRodClient {
             port = proxy.getClientPort();
 
             // kubectl get secret example-infinispan-generated-secret -o jsonpath="{.data.identities\.yaml}" | base64 --decode
-            ConfigurationBuilder builder = new ConfigurationBuilder();
+            if (this.hotRodClientConfig == null) {
+               this.hotRodClientConfig = new ConfigurationBuilder();
+            }
             String username = System.getProperty("infinispan.client.hotrod.auth_username");
             if (username != null) {
-               builder.security().authentication().username(username).password(System.getProperty("infinispan.client.hotrod.auth_password"));
+               hotRodClientConfig.security().authentication().username(username).password(System.getProperty("infinispan.client.hotrod.auth_password"));
             }
-            builder.clientIntelligence(ClientIntelligence.BASIC);
-            builder.addServer()
+            hotRodClientConfig.clientIntelligence(ClientIntelligence.BASIC);
+            hotRodClientConfig.addServer()
                   .host("127.0.0.1")
                   .port(port);
 
-            RemoteCacheManager cacheManager = new RemoteCacheManager(builder.build());
+            RemoteCacheManager cacheManager = new RemoteCacheManager(hotRodClientConfig.build());
             for (String currentCacheName : cacheManager.getCacheNames()) {
                if (!cacheName.equals(currentCacheName) && !currentCacheName.startsWith("___") && !"default".equals(currentCacheName)) {
                   cacheManager.administration().removeCache(currentCacheName);
                }
             }
-            cacheManager.administration().getOrCreateCache(cacheName, cacheConfig.build());
+            if (cacheConfig != null) {
+               cacheManager.administration().getOrCreateCache(cacheName, cacheConfig.build());
+            }
             return cacheManager.getCache(cacheName);
          } catch (Exception e) {
             proxy.stop();

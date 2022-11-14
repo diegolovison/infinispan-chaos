@@ -1,6 +1,7 @@
 package org.infinispan.chaos.hotrod;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,5 +57,9 @@ public class HotRodClientPool {
 
    public void close() {
       this.clients.values().forEach((client) -> client.close());
+   }
+
+   public Collection<HotRodClient> getClients() {
+      return clients.values();
    }
 }

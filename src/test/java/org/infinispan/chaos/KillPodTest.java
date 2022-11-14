@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 public class KillPodTest {
 
    @Test
-   public void killPodTest() throws IOException {
+   public void testKillPod() throws IOException {
       // cache config
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(SoftIndexFileStoreConfigurationBuilder.class);

@@ -1,0 +1,11 @@
+apiVersion: infinispan.org/v1
+kind: Infinispan
+metadata:
+  name: example-infinispan
+spec:
+  replicas: 3
+  configMapName: "cluster-config"
+  security:
+    endpointEncryption:
+      type: None
+    endpointAuthentication: false
