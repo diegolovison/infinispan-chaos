@@ -72,3 +72,14 @@ mvn verify -Dinfinispan.client.hotrod.auth_username=admin -Dinfinispan.client.ho
 ```bash
 kubectl cp example-infinispan-0:/opt/infinispan/server/data example-infinispan-0
 ```
+
+# Bash Cheat Sheet
+### Count file lines
+```bash
+wc -l file
+```
+
+### File size
+```bash
+du -sh file
+```
